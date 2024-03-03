@@ -95,6 +95,20 @@ def pick(passenger_id,arrival_time,src,dest):
             print(f'pod_departure for {src} to {dest}')
             pod_departure=pod_available_time
     final_time=pod_departure+travel_time+board_deboard+board_deboard
+    cursor.execute(
+        "SELECT * FROM passenger WHERE INSTR(path, ?) > 0 ",(src,))
+
+    coming_to_stop = cursor.fetchall()
+    # print(len(coming_to_stop))
+    for c in coming_to_stop:
+
+        _, a, dest, _, dep, _, pdep, _, _ = c
+        print(f"pod departure of presenet {pod_departure}")
+        print(f"pdep of presenet {pdep}")
+        if (dep!=0 and (abs((pdep + shortestPath(a, src)) - pod_departure)<4)):
+
+            pod_departure = pod_departure + minimum_distance
+            final_time = final_time + minimum_distance
 
     cursor.execute(
         "UPDATE pod SET pod_available_time = ?,current_stop=?,destination_stop=?  WHERE id = ?",
