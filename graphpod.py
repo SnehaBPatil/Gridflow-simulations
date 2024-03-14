@@ -6,6 +6,7 @@ conn = sqlite3.connect('graph.db')
 cursor = conn.cursor()
 graph = nx.Graph()
 board_deboard=4
+minimum_distance=4
 speed=40000 # speed of pod in m/s
 # Adding vertices
 # ARRIVAL pod_available_time IS pod_available_time AT WHICH PASSENGER ARRIVES TO THE STATION.
@@ -45,7 +46,7 @@ def shortestPath(src,dest):
     shortest_distance = nx.dijkstra_path_length(graph, src, dest, weight='weight')
     return shortest_distance,shortest_path
 
-def pick(passenger_id,arrival_time,src,dest):
+def pick(passenger_id,arrival_time,src,dest,path):
     min_time=40000000
     final_pod=None
     final_time=0
@@ -98,17 +99,41 @@ def pick(passenger_id,arrival_time,src,dest):
     cursor.execute(
         "SELECT * FROM passenger WHERE INSTR(path, ?) > 0 ",(src,))
 
-    coming_to_stop = cursor.fetchall()
-    # print(len(coming_to_stop))
-    for c in coming_to_stop:
 
-        _, a, dest, _, dep, _, pdep, _, _ = c
-        print(f"pod departure of presenet {pod_departure}")
-        print(f"pdep of presenet {pdep}")
-        if (dep!=0 and (abs((pdep + shortestPath(a, src)) - pod_departure)<4)):
+    l=[]
+    l.append(passenger_id)
+    for i in path:
+    #Here this query will list out all the passengers in transit and whose  have current stop in their path.
+ 
+        query = """
+            SELECT * 
+            FROM passenger 
+            WHERE pid NOT IN ({}) 
+            AND INSTR(path, ?) > 0
+        """.format(', '.join(['?'] * len(l)))
 
-            pod_departure = pod_departure + minimum_distance
-            final_time = final_time + minimum_distance
+        cursor.execute(query, l + [i])
+
+        # Fetch the results
+
+        coming_to_stop = cursor.fetchall()
+        # print(len(coming_to_stop))
+        for c in coming_to_stop:
+
+            cid, a, dest, _, dep, _, pdep, _, _ = c
+            
+            #Here estimate of the other pods which will be in vicinity is checked
+            if (dep!=0 and ((abs((pod_departure+shortestPath(src,i))-(pdep + shortestPath(a, i))) <4))):
+                print(i)
+                print(abs((pod_departure + shortestPath(src, i)) - (pdep + shortestPath(a, i))))
+                if(i==src):
+                    pod_departure = pod_departure + minimum_distance
+                final_time = final_time + minimum_distance
+
+
+                
+                l.append(cid)
+
 
     cursor.execute(
         "UPDATE pod SET pod_available_time = ?,current_stop=?,destination_stop=?  WHERE id = ?",
@@ -137,6 +162,6 @@ while(count!=0):
     count=len(passenger_to_update_at_a)
 
     for p in passenger_to_update_at_a:
-        passenger_id, cstop, dest,t,_,_,_,_ = p
+        passenger_id, cstop, dest,t,_,_,_,_,path = p
         pick(passenger_id,t,cstop,dest)
 
