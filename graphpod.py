@@ -163,5 +163,5 @@ while(count!=0):
 
     for p in passenger_to_update_at_a:
         passenger_id, cstop, dest,t,_,_,_,_,path = p
-        pick(passenger_id,t,cstop,dest)
+        pick(passenger_id,t,cstop,dest,path)
 
