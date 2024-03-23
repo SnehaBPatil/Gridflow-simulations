@@ -22,15 +22,6 @@ graph.add_edge('P', 'Q', weight=900)
 graph.add_edge('R', 'S', weight=450)
 
 
-g.add_edge('A', 'B', weight=13)
-g.add_edge('B', 'Q', weight=20)
-g.add_edge('B', 'C', weight=7)
-g.add_edge('B', 'R', weight=15)
-g.add_edge('C', 'D', weight=17)
-g.add_edge('P', 'Q', weight=10)
-g.add_edge('R', 'S', weight=5)
-
-
 
 node_positions = {
     'A': (-12.55, 3.36),
@@ -48,77 +39,90 @@ def shortestPath(src, dest):
     shortest_distance = nx.dijkstra_path_length(graph, src, dest, weight='weight')
     return shortest_distance
 
-def short(src, dest):
+def collision(comming_to_stop,time,stop):
+    for c in comming_to_stop:
+        _, _, _, start_time, stop_time, _ = c
+        # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
+        if ((abs(start_time - time) < 4)):
 
-    shortest_distance = nx.dijkstra_path_length(g, src, dest, weight='weight')
-    return shortest_distance
+            if (time > start_time):
+                time = time + minimum_distance
+            else:
+                time = start_time + minimum_distance
+    return time
 
 def emptypod(stop,src,final_pod,present_start_time):
     path=nx.dijkstra_path(graph, stop, src, weight='weight') #path from stop to source stop of passenger
     id,_,_,_=final_pod
-    l1=[] #will contain empty pods  ids which will collide in journey
-    l2=[] #will contain pods with passenger ids which will collide in journey
-    l1.append(id)
     for i in range(0,len(path)-1):
-        id_list = ",".join(map(str, l1))
-        query = f"SELECT * FROM emptypod WHERE (src = ?) AND pod_id NOT IN ({id_list})"
-        #It selects row which has source as their present stop from table emptypod
-        cursor.execute(query,(path[i]))
+
+        cursor.execute("SELECT * FROM emptypod WHERE src = ?  and start_time<=?",(path[i],present_start_time))
         comming_to_stop=cursor.fetchall()
-        for c in comming_to_stop:
-            _,_,_,start_time,stop_time,podid=c
-            # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
-            if ((abs(start_time-present_start_time)<4)):
-                print(f'{c} pod {podid}---- in stop {path[i]}')
-                present_start_time = present_start_time + minimum_distance
-                l1.append(podid)
+        present_start_time=collision(comming_to_stop,present_start_time,path[i])
+        # for c in comming_to_stop:
+        #     _,_,_,start_time,stop_time,podid=c
+        #     # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
+        #     if ((abs(start_time-present_start_time)<4)):
+        #         print(f'{c} pod {podid}---- in stop {path[i]}')
+        #         if(present_start_time> start_time):
+        #             present_start_time = present_start_time + minimum_distance
+        #         else:
+        #             present_start_time=start_time+minimum_distance
 
 
 
-        id_list = ",".join(map(str, l2))
-        query = f"SELECT * FROM journey WHERE (src = ?) AND pid NOT IN ({id_list})"
-        #It selects row which has source as their present stop from table journey.
-        cursor.execute(query,(path[i]))
+        cursor.execute("SELECT * FROM journey WHERE src = ?  and start_time<=?",(path[i],present_start_time))
         comming_to_stop = cursor.fetchall()
-        for c in comming_to_stop:
-            _, _, _, start_time, stop_time, cid = c
-            #stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
-            if ((abs(start_time-present_start_time)<4)):
-                print(f'{c} passenger {cid}---- in stop {path[i]}')
-                present_start_time = present_start_time + minimum_distance
-                l2.append(cid)
+        present_start_time = collision(comming_to_stop, present_start_time, path[i])
+        # for c in comming_to_stop:
+        #     _, _, _, start_time, stop_time, cid = c
+        #     #stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
+        #     if ((abs(start_time-present_start_time)<4)):
+        #         print(f'{c} passenger {cid}---- in stop {path[i]}')
+        #         if (present_start_time > start_time):
+        #             present_start_time = present_start_time + minimum_distance
+        #         else:
+        #             present_start_time = start_time + minimum_distance
+        #
 
         #Next stop
         present_stop_time=present_start_time+shortestPath(path[i], path[i+1])
         i=i+1
         # It selects row which has source as their present stop from table emptypod
-        id_list = ",".join(map(str, l1))
-        query = f"SELECT * FROM emptypod WHERE (src = ?) AND pod_id NOT IN ({id_list})"
-        cursor.execute(query,(path[i]))
+
+        cursor.execute("SELECT * FROM emptypod WHERE src = ?  and start_time<=?", (path[i], present_stop_time))
 
         comming_to_stop = cursor.fetchall()
-        for c in comming_to_stop:
-            _, _, _, start_time, stop_time, podid = c
-            # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
-            if ((abs(start_time-present_start_time)<4 )):
-                print(f'{c} pod {podid}---- in stop {path[i]}')
-                present_stop_time = present_stop_time + minimum_distance
-                l1.append(podid)
+        present_stop_time = collision(comming_to_stop, present_stop_time, path[i])
+
+        # for c in comming_to_stop:
+        #     _, _, _, start_time, stop_time, podid = c
+        #     # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
+        #     if ((abs(start_time-present_stop_time)<4 )):
+        #         print(f'{c} pod {podid}---- in stop {path[i]}')
+        #         if (present_start_time > start_time):
+        #             present_stop_time = present_stop_time + minimum_distance
+        #         else:
+        #             present_stop_time = start_time + minimum_distance
+        #
 
 
         # It selects row which has source as their present stop from table journey.
-        id_list = ",".join(map(str, l2))
-        query = f"SELECT * FROM journey WHERE (src = ? ) AND pid NOT IN ({id_list})"
-        cursor.execute(query,(path[i]))
+
+        cursor.execute("SELECT * FROM journey WHERE src = ?  and start_time<=?",(path[i],present_stop_time))
         comming_to_stop = cursor.fetchall()
-        for c in comming_to_stop:
-            _, _, _, start_time, stop_time, cid = c
-            # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
-            if ((abs(start_time-present_start_time)<4)):
-                print(f'{c} passenger {cid}---- in stop {path[i]}')
-                print(f'present start time {present_start_time} and present stop time {present_stop_time}')
-                present_stop_time = present_stop_time + minimum_distance
-                l2.append(cid)
+        present_stop_time = collision(comming_to_stop, present_stop_time, path[i])
+        # for c in comming_to_stop:
+        #     _, _, _, start_time, stop_time, cid = c
+        #     # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
+        #     if ((abs(start_time-present_stop_time)<4)):
+        #         print(f'{c} passenger {cid}---- in stop {path[i]}')
+        #         print(f'present start time {present_start_time} and present stop time {present_stop_time}')
+        #         if (present_stop_time > start_time):
+        #             present_stop_time = present_stop_time + minimum_distance
+        #         else:
+        #             present_stop_time = start_time + minimum_distance
+
 
         cursor.execute("INSERT INTO emptypod (src, dest, start_time, stop_time, pod_id) VALUES (?, ?, ?, ?, ?)",
                        (path[i-1], path[i], present_start_time, present_stop_time, id)) #update one part of journey in empytypod table.
@@ -163,7 +167,7 @@ def pick(passenger_id, arrival_time, src, dest,path):
 
     travel_time = shortestPath(src, dest)
     if (stop != src):
-        distance = distance + short(stop, src)
+
 
         if (arrival_time > time):
 
@@ -187,77 +191,83 @@ def pick(passenger_id, arrival_time, src, dest,path):
             # final_time = pod_departure + travel_time
 
 
-    l1=[] # will contains empty pod ids which will collide in journey
-    l1.append(id)
-    l2=[] #will contain pods with passenger ids which will collide in journey
+
 
     present_start_time=pod_departure
     present_stop_time=0
-    l2.append(passenger_id)
+
     for i in range(0,len(path)-1):
 
-        id_list = ",".join(map(str, l1))
+
         # It selects row which has source as their present stop from table emptypod
-        query = f"SELECT * FROM emptypod WHERE (src = ? ) AND pod_id NOT IN ({id_list})"
-        cursor.execute(query,(path[i]))
+        cursor.execute("SELECT * FROM emptypod WHERE src = ?  and start_time<=?",(path[i],present_start_time))
         print(f"Present start time {present_start_time} and {present_stop_time} for passengerid {passenger_id}")
         comming_to_stop = cursor.fetchall()
-        for c in comming_to_stop:
-            _, _, _, start_time, stop_time, podid = c
-            # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
-            print(f'{c} pod {podid}---- in stop {path[i]}')
-            if ((abs(start_time-present_start_time)<4 )):
-                if(path[i]==src):
-                    pod_departure=pod_departure+minimum_distance
-                present_start_time = present_start_time + minimum_distance
-                l1.append(podid)
+        present_start_time = collision(comming_to_stop, present_start_time, path[i])
+        # for c in comming_to_stop:
+        #     _, _, _, start_time, stop_time, podid = c
+        #     # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
+        #     print(f'{c} pod {podid}---- in stop {path[i]}')
+        #     if ((abs(start_time-present_start_time)<4 )):
+        #         if(path[i]==src):
+        #             pod_departure=pod_departure+minimum_distance
+        #         if (present_start_time > start_time):
+        #             present_start_time = present_start_time + minimum_distance
+        #         else:
+        #             present_start_time = start_time + minimum_distance
 
-        id_list = ",".join(map(str, l2))
-        query = f"SELECT * FROM journey WHERE (src = ? ) AND pid NOT IN ({id_list})"
-        cursor.execute(query,(path[i]))
+
+
+        cursor.execute("SELECT * FROM journey WHERE src = ?  and start_time<=?",(path[i],present_start_time))
         # It selects row which has source as their present stop from table journey
         coming_to_stop = cursor.fetchall()
+        present_start_time = collision(comming_to_stop, present_start_time, path[i])
+        # for c in coming_to_stop:
+        #     _,_,_,start_time,stop_time,cid=c
+        #     if ((abs(start_time-present_start_time)<4 )):
+        #         # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
+        #         print(f'{c} passenger----{passenger_id} in stop {path[i]}')
+        #         if(path[i]==src):
+        #             pod_departure = pod_departure + minimum_distance
+        #         if (present_start_time > start_time):
+        #             present_start_time = present_start_time + minimum_distance
+        #         else:
+        #             present_start_time = start_time + minimum_distance
+        #         print(f'for passenger id{passenger_id}---{c}')
 
-        for c in coming_to_stop:
-            _,_,_,start_time,stop_time,cid=c
-            if ((abs(start_time-present_start_time)<4 )):
-                # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
-                print(f'{c} passenger----{passenger_id} in stop {path[i]}')
-                if(path[i]==src):
-                    pod_departure = pod_departure + minimum_distance
-                present_start_time = present_start_time + minimum_distance
-                print(f'for passenger id{passenger_id}---{c}')
-                l2.append(cid)
         present_stop_time=present_start_time+shortestPath(path[i],path[i+1])
         i=i+1   #checking next stop
 
-        id_list = ",".join(map(str, l1))
-        query = f"SELECT * FROM emptypod WHERE (src = ?) AND pod_id NOT IN ({id_list})"
-        # It selects row which has source as their present stop from table emptypod
-        cursor.execute(query,(path[i]))
+
+        cursor.execute("SELECT * FROM emptypod WHERE src = ?  and start_time<=?",(path[i],present_stop_time))
         comming_to_stop = cursor.fetchall()
-        for c in comming_to_stop:
-            _, _, _, start_time, stop_time, podid = c
-            # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
-            if ((abs(start_time-present_start_time)<4 )):
-                print(f'{c}----pod  {podid} in stop {path[i]}')
-                present_stop_time = present_stop_time + minimum_distance
-                l1.append(podid)
+        present_stop_time = collision(comming_to_stop, present_stop_time, path[i])
+        # for c in comming_to_stop:
+        #     _, _, _, start_time, stop_time, podid = c
+        #     # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
+        #     if ((abs(start_time-present_stop_time)<4 )):
+        #         print(f'{c}----pod  {podid} in stop {path[i]}')
+        #         if (present_stop_time > start_time):
+        #             present_stop_time = present_stop_time + minimum_distance
+        #         else:
+        #             present_stop_time = start_time + minimum_distance
 
 
 
-        id_list = ",".join(map(str, l2))
-        query = f"SELECT * FROM journey WHERE (src = ? ) AND pid NOT IN ({id_list})"
-        # It selects row which has source as their present stop from table journey
-        cursor.execute(query,(path[i]))
+
+        cursor.execute("SELECT * FROM journey WHERE src = ?  and start_time<=?",(path[i],present_stop_time))
         comming_to_stop = cursor.fetchall()
-        for c in comming_to_stop:
-            _, _, _, start_time, stop_time, podid = c
-            # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
-            if ((abs(start_time-present_start_time)<4)):
-                print(f'{c}  passenger----{passenger_id} in stop {path[i]}')
-                present_stop_time = present_stop_time + minimum_distance
-                l2.append(podid)
+        present_stop_time = collision(comming_to_stop, present_stop_time, path[i])
+        # for c in comming_to_stop:
+        #     _, _, _, start_time, stop_time, podid = c
+        #     # stop time and start time are time at which the pod comes to stop and leaves the stop these are from table
+        #     if ((abs(start_time-present_stop_time)<4)):
+        #         print(f'{c}  passenger----{passenger_id} in stop {path[i]}')
+        #         if (present_start_time > start_time):
+        #             present_stop_time = present_stop_time + minimum_distance
+        #         else:
+        #             present_stop_time = start_time + minimum_distance
+        #
 
         cursor.execute("INSERT INTO journey (src, dest, start_time, stop_time, pid) VALUES (?, ?, ?, ?, ?)",
                        (path[i - 1], path[i], present_start_time, present_stop_time, passenger_id))
@@ -299,4 +309,3 @@ while (count != 0):
         passenger_id, cstop, dest, t, _, _, _, _, path = p
         pick(passenger_id, t, cstop, dest,path)
 
-# print(f"extra distance is {distance} km")
