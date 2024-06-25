@@ -1,0 +1,30 @@
+UPDATE passenger set flag=0,
+departure_time=0,
+reached=0,
+waiting_time=0,
+bus_departure=0,
+bus_id=0;
+
+UPDATE bus set 
+present_stop='A',
+destination_stop='B',
+time=0
+where id=1;
+
+UPDATE bus set 
+present_stop='D',
+destination_stop='C',
+time=0
+where id=2;
+
+UPDATE bus set 
+present_stop='P',
+destination_stop='Q',
+time=0
+where id=3;
+
+UPDATE bus set 
+present_stop='S',
+destination_stop='R',
+time=0
+where id=4;
