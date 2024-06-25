@@ -1,0 +1,74 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+# Create an empty graph
+g = nx.Graph()
+import math
+g.add_edge('A', 'B',weight=13)
+g.add_edge('B','Q',weight=20)
+g.add_edge('B', 'C',weight=7)
+g.add_edge('B','R',weight=15)
+g.add_edge('C','D',weight=17)
+g.add_edge('P', 'Q',weight=10)
+g.add_edge('R','S',weight=5)
+
+node_positions = {
+    'A': (-12.55, 3.36),
+    'B': (0, 0),
+    'C': (0, -7),
+    'D': (14.72, -15.5),
+    'P': (8.66, 5),
+    'Q': (0, 20),
+    'R': (-14.48, -3.88),
+    'S': (-14.48, -7.88),
+   
+# add the coordinates obtained by new_stops.py here
+'1': (-9.666906435932681, 13.466073365827972), '2': (10.341907766633284, 15.560034333094718), '3': (10.319159852232328, -8.29158682705748), '4': (-4.762516657195865, -13.79738100155654), '5': (-2.0407317555339537, 10.03372904617603), '6': (-5.848800493856611, -3.532949886871993), '7': (11.000729403854223, -0.9960402031000855), '8': (-11.931432450577837, -13.005159929942359), '9': (3.336660706099814, 9.628403938344972), '10': (5.08839082453436, -14.55588566159917)
+}
+
+
+
+# Add nodes to the graph based on the provided node_positions
+nodes = node_positions.keys()
+g.add_nodes_from(nodes)
+
+
+plt.figure(figsize=(10, 8))
+nx.draw(g, pos=node_positions, with_labels=True, node_size=1000, node_color='skyblue', font_size=12, font_weight='bold', edge_color='none')
+nx.draw(g, pos=node_positions, with_labels=True, node_size=1000, node_color='skyblue', font_size=12, font_weight='bold', edge_color='gray', width=2)
+edge_labels = nx.get_edge_attributes(g, 'weight')
+nx.draw_networkx_edge_labels(g, pos=node_positions, edge_labels=edge_labels)
+plt.title('Graph without Edges')
+plt.show()
+
+def calculate_distance(coord1, coord2):
+    # Calculate Euclidean distance between two points
+    return math.sqrt((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2)
+def finddistance(node,pos):
+    distance=0
+    for i in node_positions:
+        p=node_positions.get(i)
+        if(i==node):
+            continue
+        else:
+            distance=distance+calculate_distance(pos,p)
+    return distance
+
+
+data={}
+j=0
+
+for node in node_positions:
+    point= node_positions.get(node)
+    distance=finddistance(node,point)
+    data[j] = {'node':node,
+        'x': point[0],
+               'y': point[1],
+               'distance': distance
+
+               }
+
+    j=j+1
+
+
+sorted_coordinates = sorted(data.values(), key=lambda k: k['distance'],reverse=True)
+print(sorted_coordinates)
