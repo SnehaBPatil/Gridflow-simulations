@@ -1,0 +1,254 @@
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+import numpy as np
+import networkx as nx
+import random
+import sqlite3
+import matplotlib.pyplot as plt
+conn = sqlite3.connect('pod.db')
+cursor = conn.cursor()
+
+c1=sqlite3.connect('bus.db')
+c=c1.cursor()
+g = nx.Graph()
+g.add_edge('A', 'B',weight=13*90)
+# g.add_edge('B','Q',weight=20*90)
+g.add_edge('B', 'C',weight=7*90)
+# g.add_edge('B','R',weight=15*90)
+# g.add_edge('C','D',weight=17*90)
+# g.add_edge('P', 'Q',weight=k*90)
+g.add_edge('R','S',weight=5*90)
+g.add_edge('1','a',weight=8.142*90)
+g.add_edge('2','b',weight=6.305*90)
+g.add_edge('3','c',weight=7.128*90)
+g.add_edge('4','C',weight=7.81*90)
+g.add_edge('5','e',weight=2.769*90)
+g.add_edge('6','f',weight=1.361*90)
+g.add_edge('7','g',weight=5.916*90)
+g.add_edge('8','h',weight=2.556*90)
+g.add_edge('9','S',weight=6.51*90)
+g.add_edge('k','j',weight=2.182*90)
+
+g.add_edge('Q','a',weight=6.29*90)
+g.add_edge('a','e',weight=6.07*90)
+g.add_edge('e','B',weight=7.67*90)
+g.add_edge('Q','b',weight=9.32*90)
+g.add_edge('b','h',weight=0.84*90)
+g.add_edge('h','g',weight=5.26*90)
+g.add_edge('g','P',weight=1.90*90)
+g.add_edge('B','j',weight=6.19*90)
+g.add_edge('j','R',weight=8.80*90)
+g.add_edge('C','f',weight=6.28*90)
+g.add_edge('f','c',weight=2.94*90)
+g.add_edge('D','c',weight=8.26*90)
+
+
+
+graph=nx.Graph()
+
+
+
+stops=['A','B','C','D','P','Q','R','S']
+
+# Adding edges
+graph.add_edge('A', 'B',weight=1170)
+graph.add_edge('B','Q',weight=1800)
+graph.add_edge('B', 'C',weight=630)
+graph.add_edge('B','R',weight=1350)
+graph.add_edge('C','D',weight=1530)
+graph.add_edge('P', 'Q',weight=900)
+graph.add_edge('R','S',weight=450)
+
+node={
+    'A': (-12.55, 3.36),
+    'B': (0, 0),
+    'C': (0, -7),
+    'D': (14.72, -15.5),
+    'P': (8.66, 5),
+    'Q': (0, 20),
+    'R': (-14.48, -3.88),
+    'S': (-14.48, -7.88)
+}
+
+node_positions = {
+    'A': (-12.55, 3.36),
+    'B': (0, 0),
+    'C': (0, -7),
+    'D': (14.72, -15.5),
+    'P': (8.66, 5),
+    'Q': (0, 20),
+    'R': (-14.48, -3.88),
+    'S': (-14.48, -7.88),
+    '1': (-8.142833154706842, 13.720608494951295),
+    '2': (10.119165525875031, 15.083258474709421),
+    '3': (11.127846001906255, -5.194181599971291),
+    '4': (-6.009645079116156, -11.883468256558299),
+    '5': (-2.7692563389802793, 7.655544127866281),
+    '6': (4.6259854559926685, -11.243084424530533),
+    '7': (12.833600501732175, 9.604166208157004),
+    '8': (2.8640897654496613, 9.926292386756312),
+    '9': (-12.944410081540621, -14.205556631800981),
+    'k': (-5.409664722124553, -3.70871668990679),
+    'a':(0,13.72),
+    'b':(4.658,11.930),
+    'c':(7.5631,-11.367),
+    'e':(0,7.655),
+    'f':(5.306,-10.064),
+    'g':(7.709,6.645),
+    'h':(5.077,11.204),
+    'j':(-5.974,-1.60)
+}
+def generate_poisson_disc_points(x_min, x_max, y_min, y_max, min_distance, num_points):
+    # Constants
+    k = 30  # Maximum number of attempts for each point
+
+    # Cell size for grid
+    cell_size = min_distance / math.sqrt(2)
+
+    # Number of grid cells in x and y directions
+    cols = math.ceil((x_max - x_min) / cell_size)
+    rows = math.ceil((y_max - y_min) / cell_size)
+
+    # Initialize grid
+    grid = [[None] * cols for _ in range(rows)]
+
+    # Initialize active and sample lists
+    active_list = []
+    sample_points = []
+
+    def get_random_point_around(point, min_dist, max_dist):
+        r = np.random.uniform(min_dist, max_dist)
+        theta = np.random.uniform(0, 2 * math.pi)
+        x = point[0] + r * math.cos(theta)
+        y = point[1] + r * math.sin(theta)
+        return x, y
+
+    def get_grid_index(point):
+        col = math.floor((point[0] - x_min) / cell_size)
+        row = math.floor((point[1] - y_min) / cell_size)
+        return col, row
+
+    def is_valid_point(point):
+        col, row = get_grid_index(point)
+        for c in range(max(0, col - 2), min(cols, col + 3)):
+            for r in range(max(0, row - 2), min(rows, row + 3)):
+                neighbor = grid[r][c]
+                if neighbor is not None and calculate_distance(point, neighbor) < min_distance:
+                    return False
+        return True
+
+    def calculate_distance(coord1, coord2):
+        return math.sqrt((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2)
+
+    # Choose initial point randomly
+    initial_point = (np.random.uniform(x_min, x_max), np.random.uniform(y_min, y_max))
+    active_list.append(initial_point)
+    sample_points.append(initial_point)
+    col_init, row_init = get_grid_index(initial_point)
+    grid[row_init][col_init] = initial_point
+
+    while active_list:
+        # Randomly select an active point
+        index = np.random.randint(len(active_list))
+        active_point = active_list[index]
+
+        # Generate new points around active point
+        found_valid_point = False
+        for _ in range(k):
+            new_point = get_random_point_around(active_point, min_distance, 2 * min_distance)
+            if (x_min <= new_point[0] <= x_max) and (y_min <= new_point[1] <= y_max) and \
+                    is_valid_point(new_point):
+                active_list.append(new_point)
+                sample_points.append(new_point)
+                col_new, row_new = get_grid_index(new_point)
+                grid[row_new][col_new] = new_point
+                found_valid_point = True
+                break
+
+        if not found_valid_point:
+            active_list.pop(index)
+
+    return sample_points
+
+# Define the range of x and y values
+x_min, x_max = -15, 15
+y_min, y_max = -16, 20
+
+# Minimum distance for Poisson disc sampling
+min_distance = 0.3  # Adjust as needed
+
+# Generate Poisson disc points
+num_points = 10000
+poisson_points = generate_poisson_disc_points(x_min, x_max, y_min, y_max, min_distance, num_points)
+
+# Plot the points
+x_values, y_values = zip(*poisson_points)
+
+points = [(x, y) for x, y in zip(x_values, y_values)]
+print(len(points))
+
+def calculate_distance(coord1, coord2):
+    return math.sqrt((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2)
+
+
+
+def find_nearest_stop_for_pod(coord):
+    min_distance = float('inf')
+    nearest_stop = None
+
+    for stop, stop_coord in node_positions.items():
+        distance = calculate_distance(coord, stop_coord)
+        if distance < min_distance:
+            min_distance = distance
+            nearest_stop = stop
+
+    return nearest_stop,(min_distance*720)
+
+def find_nearest_stop_for_bus(coord):
+    min_distance = float('inf')
+    nearest_stop = None
+
+    for stop, stop_coord in node.items():
+        distance = calculate_distance(coord, stop_coord)
+        if distance < min_distance:
+            min_distance = distance
+            nearest_stop = stop
+
+    return nearest_stop,(min_distance*720)
+
+def generate_destination(elements,arrival_stop):
+    excluded_elements = [e for e in elements if e != arrival_stop]
+    return random.choice(excluded_elements)
+
+
+def generate_random_arrival_time():
+    return random.randint(0, 64800)
+#
+for point in points:
+    arrival_time = generate_random_arrival_time()
+
+    arrival_stop_pod, t = find_nearest_stop_for_pod(point)
+    k=round(t)
+    arrival_time_pod = arrival_time + round(t)
+
+    arrival_stop_bus,t=find_nearest_stop_for_bus(point)
+    j=round(t)
+    arrival_time_bus=arrival_time+round(t)
+
+    destination_stop = generate_destination(stops, arrival_stop_bus)
+    path_pod = nx.dijkstra_path(g, arrival_stop_pod, destination_stop, weight='weight')
+    path_bus = nx.dijkstra_path(graph, arrival_stop_bus, destination_stop, weight='weight')
+    path_pod = ''.join(path_pod)
+    path_bus=''.join(path_bus)
+    cursor.execute(
+        "INSERT INTO passenger (arrival_stop,destination_stop,arrival_time,departure_time,flag,pod_departure,from_stop,path,t) "
+        "VALUES (?, ?, ?, ?,?, ?, ?,?,?)",
+        (arrival_stop_pod, destination_stop, arrival_time_pod, 0, 0, 0, None, path_pod,k))
+    conn.commit()
+
+    c.execute(
+        "INSERT INTO passenger (arrival_time,arrival_stop,destination_stop,bus_departure,departure_time,flag,path,waiting_time,bus_id,reached,t) "
+        "VALUES (?, ?, ?, ?,?, ?, ?, ?,?,?,?)",
+        (arrival_time_bus, arrival_stop_bus, destination_stop, 0, 0, 0, path_bus, 0, 0, 0,j))
+    c1.commit()
