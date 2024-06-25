@@ -1,0 +1,47 @@
+UPDATE passenger
+SET departure_time = 0,
+pod_departure=0,
+flag=0;
+
+UPDATE pod
+SET time = 0;
+
+
+UPDATE pod
+SET destination_stop = 'A',
+current_stop='A'
+WHERE id<24;
+
+UPDATE pod
+SET destination_stop = 'B',
+current_stop='B'
+WHERE id<=46 and id>23;
+
+UPDATE pod
+SET destination_stop = 'C',
+current_stop='C'
+WHERE id<=69 and id>46;
+
+UPDATE pod
+SET destination_stop = 'D',
+current_stop='D'
+WHERE id<=92 and id>69;
+UPDATE pod
+SET destination_stop = 'P',
+current_stop='P'
+WHERE id<=115 and id>92;
+
+UPDATE pod
+SET destination_stop = 'Q',
+current_stop='Q'
+WHERE id<=138 and id>115;
+
+UPDATE pod
+SET destination_stop = 'R',
+current_stop='R'
+WHERE id<=161 and id>138;
+
+UPDATE pod
+SET destination_stop = 'S',
+current_stop='S'
+WHERE id<=184 and id>161;
