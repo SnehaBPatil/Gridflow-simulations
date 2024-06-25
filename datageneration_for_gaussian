@@ -1,0 +1,114 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import random
+import csv
+import sqlite3
+conn = sqlite3.connect('collide.db')
+cursor = conn.cursor()
+c1=sqlite3.connect('buscap.db')
+c=c1.cursor()
+import networkx as nx
+# Parameters for the first mode
+graph = nx.Graph()
+stops = ['A', 'B', 'C', 'D', 'P', 'Q', 'R', 'S']
+graph.add_edge('A', 'B',weight=1170)
+graph.add_edge('B','Q',weight=1800)
+graph.add_edge('B', 'C',weight=630)
+graph.add_edge('B','R',weight=1350)
+graph.add_edge('C','D',weight=1530)
+graph.add_edge('P', 'Q',weight=900)
+graph.add_edge('R','S',weight=450)
+
+
+
+s=5040
+mean1 = (9-6)*3600
+std_dev1 = 6480
+
+csv_file='apoo.csv'
+# Parameters for the second mode
+mean2 = (18-6)*3600
+std_dev2 = 3600
+
+# Parameters for the uniform distribution between 11 and 16
+
+uniform_start = (11-6)*3600
+uniform_end = (16-6)*3600
+
+# Number of samples
+num_samples_mode1 = int(s)
+# num_samples_mode2 = int(s*0.35)
+
+# Generate samples from the first mode
+samples = np.random.normal(loc = mean1, scale = std_dev1, size = num_samples_mode1)
+
+# Generate samples from the uniform distribution
+# uniform_samples = np.random.uniform(uniform_start, uniform_end, size = int(s*0.15 ))
+# uniform = np.random.uniform((20-6)*3600, (24-6)*3600, size = int(s*0.15 ))
+# # Generate samples from the second mode
+# samples2 = np.random.normal(loc=mean2, scale=std_dev2, size=num_samples_mode2)
+#
+# # Combine all samples
+# samples = np.concatenate((samples1, uniform_samples, samples2,uniform))
+samples = samples[(samples >=0 ) & (samples <=64800)]
+# Plot the histogram
+print(len(samples))
+plt.hist(samples, bins=50, density=True, alpha=0.6, color='g')
+plt.title('Bimodal Distribution with Uniform Distribution in the Middle')
+plt.xlabel('Value')
+plt.ylabel('Probability Density')
+plt.show()
+# for i in range(0,len(samples)):
+#     print(round(samples[i]))
+
+
+def destination(arrival_stop):
+    # Original list
+
+
+    # Define the probabilities for each number (summing up to 1)
+    probabilities = [0.05,0.65,0.05,0.05,0.05,0.05,0.05,0.05]  # Adding 0.01 for remaining numbers
+
+    # Check if probabilities sum up to 1 (optional step)
+
+
+    # Generate a random choice based on the probabilities
+    random_choice = random.choices(stops, probabilities)[0]
+
+    return random_choice
+
+def shortestPath(src,dest):
+    shortest_path = nx.dijkstra_path(graph, src, dest, weight='weight')
+    shortest_distance = nx.dijkstra_path_length(graph, src, dest, weight='weight')
+    return shortest_path
+
+
+i=0
+while(i<len(samples)):
+    for j in range(0,8):
+        if(i==len(samples)):
+            break
+        arrival_stop=stops[j]
+        destination_stop=destination(arrival_stop)
+        while(destination_stop==arrival_stop):
+            destination_stop=destination(arrival_stop)
+        arrival_time=round(samples[i])
+        path = shortestPath(arrival_stop, destination_stop)
+        path = ''.join(path)
+        cursor.execute(
+            "INSERT INTO passenger (arrival_stop,destination_stop,arrival_time,departure_time,flag,pod_departure,from_stop,path) "
+            "VALUES (?, ?, ?, ?,?, ?, ?,?)",
+            (arrival_stop, destination_stop, arrival_time, 0, 0, 0, None, path))
+        conn.commit()
+
+        c.execute(
+            "INSERT INTO passenger (arrival_time,arrival_stop,destination_stop,bus_departure,departure_time,flag,path,waiting_time,bus_id,reached) "
+            "VALUES (?, ?, ?, ?,?, ?, ?, ?,?,?)",
+            (arrival_time, arrival_stop, destination_stop, 0, 0, 0, path, 0, 0, 0))
+        c1.commit()
+        i=i+1
+print("Passenger added successfully")
+
+
+
