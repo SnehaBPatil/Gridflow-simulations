@@ -52,7 +52,7 @@ def busfunction(busid,present_stop,destination_stop,next_stop,buspath,t,number_o
     cursor.execute("SELECT * FROM passenger WHERE flag=? and destination_stop=? and bus_id=?",(1,present_stop,busid))
     p_update=cursor.fetchall()
     for p in p_update:
-        passenger_id, arrival_time,_,d,_, _, _, s,waiting_time,_,_,_ = p
+        passenger_id, arrival_time,_,d,_, _, _, s,waiting_time,_,_,_,_ = p
         deboard(passenger_id,t)
         t=t+board_deboard
         count=count+1
@@ -63,7 +63,7 @@ def busfunction(busid,present_stop,destination_stop,next_stop,buspath,t,number_o
     cursor.execute("SELECT * FROM passenger WHERE flag=? and destination_stop!=? and bus_id=?",(1,present_stop,busid))
     p_update=cursor.fetchall()
     for p in p_update:
-        passenger_id, arrival_time,_, d, _, _, _, s, waiting_time,_,_,_ = p
+        passenger_id, arrival_time,_, d, _, _, _, s, waiting_time,_,_,_,_ = p
         print(present_stop)
         print(destination_stop)
         print(s)
