@@ -4,7 +4,7 @@ import networkx as nx
 import sqlite3
 import numpy as np
 elements = ['A', 'B', 'C', 'D', 'P', 'Q', 'R', 'S']
-conn = sqlite3.connect('bus.db')
+conn = sqlite3.connect('bus/bus.db')
 cursor = conn.cursor()
 #
 # c2 = sqlite3.connect('graphbus.db')
