@@ -52,7 +52,7 @@ def busfunction(busid,present_stop,destination_stop,next_stop,buspath,t,number_o
     cursor.execute("SELECT * FROM passenger WHERE flag=? and destination_stop=? and bus_id=?",(1,present_stop,busid))
     p_update=cursor.fetchall()
     for p in p_update:
-        passenger_id, arrival_time,_,d,_, _, _, s,waiting_time,_,_,_,_ = p
+        passenger_id, arrival_time,_,d,_, _, _, s,waiting_time,_,_,_,_,_ = p
         deboard(passenger_id,t)
         t=t+board_deboard
         count=count+1
@@ -63,7 +63,7 @@ def busfunction(busid,present_stop,destination_stop,next_stop,buspath,t,number_o
     cursor.execute("SELECT * FROM passenger WHERE flag=? and destination_stop!=? and bus_id=?",(1,present_stop,busid))
     p_update=cursor.fetchall()
     for p in p_update:
-        passenger_id, arrival_time,_, d, _, _, _, s, waiting_time,_,_,_,_ = p
+        passenger_id, arrival_time,_, d, _, _, _, s, waiting_time,_,_,_,_,_= p
         print(present_stop)
         print(destination_stop)
         print(s)
@@ -81,7 +81,7 @@ def busfunction(busid,present_stop,destination_stop,next_stop,buspath,t,number_o
     cursor.execute("SELECT * FROM passenger WHERE arrival_time<=? and flag=? and arrival_stop=? and reached=?",(t,0,present_stop,0))
     p_update=cursor.fetchall()
     for p in p_update:
-        passenger_id, arrival_time,_, d, _, _, _, s, waiting_time,_,_,_ = p
+        passenger_id, arrival_time,_, d, _, _, _, s, waiting_time,_,_,_,_,_ = p
         if(findnext(s,present_stop,destination_stop)==1):
             board(passenger_id,t,waiting_time,arrival_time,busid)
             t=t+board_deboard
@@ -101,7 +101,7 @@ def busdeparture(overhead,t):
     for o in overhead:
         cursor.execute("SELECT * FROM passenger where id=?", (o,))
         p = cursor.fetchone()
-        _, arrival_time, _, _, _, _, _, _, waiting_time, _, _,_ = p
+        _, arrival_time, _, _, _, _, _, _, waiting_time, _, _,_,_,_ = p
         waiting_time = waiting_time + (t - arrival_time)
         cursor.execute("UPDATE passenger set bus_departure=?,waiting_time=? where id=?",(t,waiting_time,o))
         conn.commit()
@@ -192,7 +192,6 @@ if __name__ == "__main__":
         i=i+1
     print(maxi)
     print(distance)
-
 
 
 
